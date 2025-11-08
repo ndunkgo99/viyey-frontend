@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VIYEY</title>
+  <!-- 🔥 Firebase SDK (CDN - Kompatibel dengan HTML biasa) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    /* === GAYA UMUM === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: #000;
+      color: white;
+      padding-bottom: 70px;
+      overflow-x: hidden;
+    }
+    .hidden { display: none; }
+    /* === MODAL LOGIN & DAFTAR === */
+    #loginModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 3000;
+      backdrop-filter: blur(5px);
+    }
+    .auth-box {
+      background: #0a0a1a;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.8), 0 0 40px rgba(0, 128, 255, 0.6);
+      border: 2px solid rgba(0, 240, 255, 0.7);
+    }
+    .auth-box h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00f0ff;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.9);
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 2px solid #0080ff;
+      background: #000;
+      color: white;
+    }
+    .btn-auth {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #0080ff, #00f0ff);
+      color: black;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.8), 0 0 30px rgba(0, 128, 255, 0.6);
+    }
+    .btn-toggle {
+      background: transparent;
+      color: #00f0ff;
+      box-shadow: none;
+      margin-top: 15px;
+      text-align: center;
+      text-decoration: underline;
+      cursor: pointer;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+    }
+    /* === BACKGROUND HEXAGON === */
+    .hex-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .hex-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    .hex {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #004080, #0080ff);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.7), inset 0 0 15px rgba(0, 240, 255, 0.5);
+      transform: rotate(30deg);
+      animation: float 6s ease-in-out infinite;
+    }
+    .hex:nth-child(even) {
+      transform: rotate(-30deg);
+    }
+    @keyframes float {
+      0% { transform: rotate(30deg) translateY(0px); }
+      50% { transform: rotate(-30deg) translateY(-10px); }
+      100% { transform: rotate(30deg) translateY(0px); }
+    }
+    /* === HEADER === */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: rgba(0, 0, 0, 0.8);
+      border-bottom: 2px solid rgba(0, 240, 255, 0.7);
+      backdrop-filter: blur(5px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 240, 255, 0.6);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-decoration: none;
+      color: white;
+    }
+    .logo-img {
+      width: 40px;
+      height: 40px;
+      background: url('Logo.png') no-repeat center;
+      background-size: contain;
+    }
+    .logo-text {
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.9);
+    }
+    .user-welcome {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-top: 4px;
+      text-shadow: 0 0 5px rgba(0, 240, 255, 0.7);
+    }
+    .notification-btn {
+      background: linear-gradient(135deg, #0080ff, #00f0ff);
+      color: black;
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
+      border: 2px solid rgba(0, 240, 255, 0.7);
+      cursor: pointer;
+    }
+    /* === HALAMAN VIDEO === */
+    .search-bar {
+      margin: 15px 20px;
+      background: #0a0a1a;
+      border-radius: 10px;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      border: 2px solid rgba(0, 240, 255, 0.3);
+    }
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .section-title {
+      padding: 20px 20px 5px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.9);
+    }
+    .section-subtitle {
+      padding: 0 20px 20px;
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 20px 20px;
+    }
+    .btn {
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-yellow { 
+      background: linear-gradient(135deg, #ffcc00, #ffd700); 
+      color: black; 
+      box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+    }
+    .btn-green { 
+      background: linear-gradient(135deg, #0080ff, #00f0ff); 
+      color: black; 
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.8), 0 0 30px rgba(0, 128, 255, 0.6);
+    }
+    .btn-gray { 
+      background: #333; 
+      color: white; 
+    }
+    .folder-list {
+      padding: 0 20px 20px;
+      background: #000;
+      border-top: 2px solid rgba(0, 240, 255, 0.2);
+    }
+    .folder-item, .folder-header {
+      display: flex;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 2px solid rgba(0, 240, 255, 0.2);
+      position: relative;
+      cursor: pointer;
+    }
+    .folder-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #0080ff;
+      border-radius: 4px;
+      margin-right: 10px;
+      position: relative;
+      cursor: pointer;
+    }
+    .folder-checkbox.checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.8rem;
+      color: #00f0ff;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+    }
+    .folder-icon {
+      color: #00f0ff;
+      font-size: 1.2rem;
+      margin-right: 10px;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+    }
+    .folder-name {
+      flex: 1;
+      font-size: 0.95rem;
+      color: white;
+    }
+    .folder-menu {
+      font-size: 1.5rem;
+      color: #aaa;
+      cursor: pointer;
+      padding: 5px;
+      margin-left: auto;
+    }
+    /* === CONTEXT MENU & SUBMENU === */
+    .context-menu, .submenu {
+      position: absolute;
+      background: #0a0a1a;
+      border: 2px solid rgba(0, 240, 255, 0.5);
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(0, 240, 255, 0.5);
+      z-index: 1002;
+      min-width: 160px;
+      display: none;
+    }
+    .context-item, .submenu-item {
+      padding: 12px 15px;
+      color: white;
+      cursor: pointer;
+      font-size: 0.95rem;
+      text-align: left;
+    }
+    .context-item:hover, .submenu-item:hover {
+      background: rgba(0, 240, 255, 0.2);
+    }
+    .submenu-user {
+      padding: 12px 15px;
+      background: rgba(0, 128, 255, 0.2);
+      color: #00f0ff;
+      font-weight: bold;
+      text-align: center;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+    }
+    /* === DASHBOARD === */
+    .page { padding: 0 20px; }
+    h2 {
+      padding: 20px 0 10px;
+      font-size: 1.4rem;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.9);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px solid rgba(0, 240, 255, 0.7);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.6), 0 0 30px rgba(0, 128, 255, 0.4);
+    }
+    .value { 
+      font-size: 1.3rem; 
+      font-weight: bold; 
+      color: #00f0ff; 
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.9);
+    }
+    .label { 
+      font-size: 0.85rem; 
+      color: #aaa; 
+    }
+    .icon {
+      font-size: 1.5rem;
+      position: relative;
+    }
+    .icon::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #00ff00;
+      border-radius: 50%;
+      bottom: -2px;
+      right: -2px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      box-shadow: 0 0 15px #00ff00;
+    }
+    .icon.online::after {
+      opacity: 1;
+      animation: blinkOnline 1.5s infinite;
+    }
+    @keyframes blinkOnline {
+      0%, 100% { opacity: 1; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+      50% { opacity: 0.3; box-shadow: 0 0 5px #00ff00; }
+    }
+    .stat-detail {
+      padding: 15px 20px;
+      font-size: 1.1rem;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 10px;
+      border-left: 4px solid #00f0ff;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+    }
+    .negative {
+      color: #ff5555;
+      font-weight: bold;
+    }
+    .video-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .video-item {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 10px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      border: 2px solid rgba(0, 240, 255, 0.5);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+    }
+    .video-thumbnail {
+      width: 100px;
+      height: 60px;
+      background: #0a0a1a;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: #888;
+      border: 2px solid rgba(0, 240, 255, 0.3);
+    }
+    .video-info {
+      flex: 1;
+    }
+    .video-title {
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .video-stats {
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    /* === FILTER SLOT VIDEO === */
+    .filter-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 20px 15px;
+    }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .filter-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: #00f0ff;
+    }
+    .filter-label {
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    /* === PENGATURAN === */
+    .settings-grid {
+      display: grid;
+      gap: 15px;
+      padding: 20px;
+    }
+    .setting-item {
+      background: rgba(0,0,0,0.8);
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid rgba(0, 240, 255, 0.3);
+    }
+    .setting-label {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #00f0ff;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+    }
+    .setting-control {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      background: #000;
+      color: white;
+      border: 2px solid #0080ff;
+    }
+    /* === FOOTER === */
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      border-top: 2px solid rgba(0, 240, 255, 0.7);
+      padding: 10px 0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 -4px 20px rgba(0, 240, 255, 0.6);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #aaa;
+      text-decoration: none;
+      font-size: 0.75rem;
+      padding: 5px;
+    }
+    .nav-item.active { 
+      color: #00f0ff; 
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.9);
+    }
+    .add-btn-center {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #0080ff, #00f0ff);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: black;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.8), 0 0 40px rgba(0, 128, 255, 0.6);
+      z-index: 1001;
+      cursor: pointer;
+    }
+    #fileInput { display: none; }
+    /* === MODAL UMUM === */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #0a0a1a;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 90%;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      color: white;
+      border: 2px solid rgba(0, 240, 255, 0.7);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.8), 0 0 40px rgba(0, 128, 255, 0.6);
+    }
+    .close {
+      float: right;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #00f0ff;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+    }
+    #videoError {
+      color: #ff5555;
+      margin-top: 10px;
+      display: none;
+    }
+    /* === MODAL MODERN === */
+    .modern-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2500;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modern-modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modern-modal-content {
+      background: #0a0a1a;
+      padding: 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 450px;
+      border: 2px solid rgba(0, 240, 255, 0.7);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.8), 0 0 40px rgba(0, 128, 255, 0.6);
+    }
+    .modern-modal h3 {
+      color: #00f0ff;
+      margin-bottom: 20px;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+    }
+    .modern-input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid #0080ff;
+      background: #000;
+      color: white;
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+    .modern-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-confirm {
+      background: linear-gradient(135deg, #0080ff, #00f0ff);
+      color: black;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.7);
+    }
+    .btn-cancel {
+      background: #333;
+      color: white;
+      margin-top: 8px;
+    }
+    /* === EMBED MODAL === */
+    .embed-modal-content {
+      max-width: 550px;
+    }
+    .embed-section {
+      margin-bottom: 20px;
+    }
+    .embed-section h4 {
+      color: #00f0ff;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+    .embed-input-group {
+      display: flex;
+      gap: 10px;
+    }
+    .embed-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      border: 2px solid #0080ff;
+      background: #000;
+      color: white;
+    }
+    .btn-copy {
+      padding: 10px 15px;
+      background: #0a0a1a;
+      border: 2px solid #0080ff;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    /* === NOTIFIKASI MODERN === */
+    .notification-container {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 5000;
+      max-width: 350px;
+    }
+    .notification-modern {
+      background: #0a0a1a;
+      border-left: 4px solid #00f0ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 20px rgba(0, 240, 255, 0.5);
+      border: 1px solid rgba(0, 240, 255, 0.5);
+      transform: translateX(120%);
+      transition: transform 0.3s ease-out;
+    }
+    .notification-modern.show {
+      transform: translateX(0);
+    }
+    .notification-icon {
+      font-size: 1.2rem;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Modal Login & Daftar -->
+  <div id="loginModal">
+    <div class="auth-box" id="loginForm">
+      <h2>🔐 Login ke VIYEY</h2>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="user@example.com">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+      <button class="btn-auth" id="loginBtn">Masuk</button>
+      <button class="btn-auth" id="forgotPasswordLoginBtn">❓ Lupa Password?</button>
+    </div>
+  </div>
+  <!-- Konten Utama -->
+  <div id="mainContent" class="hidden">
+    <!-- Hexagon Background -->
+    <div class="hex-bg" id="hexBg">
+      <div class="hex-row" style="transform: translateY(-50vh);">
+        <div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div>
+      </div>
+      <div class="hex-row" style="transform: translateY(-30vh);">
+        <div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div>
+      </div>
+      <div class="hex-row" style="transform: translateY(-60vh);">
+        <div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div>
+      </div>
+    </div>
+    <!-- Header -->
+    <header id="mainHeader">
+      <a href="#" class="logo" id="logoLink">
+        <div class="logo-img"></div>
+        <div>
+          <div class="logo-text">VIYEY</div>
+          <div class="user-welcome" id="userWelcome">Selamat datang, User</div>
+        </div>
+      </a>
+      <button class="notification-btn" id="notificationBtn">🔔</button>
+    </header>
+    <!-- Halaman Dashboard -->
+    <div id="dashboardPage" class="page">
+      <h2>Ringkasan</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="icon" id="onlineIcon">👤</div>
+          <div class="label">On line</div>
+          <div class="value" id="onlineValue">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">👥</div>
+          <div class="label">Hari Ini</div>
+          <div class="value" id="todayViewsValue">5</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">👁️</div>
+          <div class="label">Kemarin</div>
+          <div class="value" id="yesterdayViewsValue">3</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">👁️</div>
+          <div class="label">Minggu Ini</div>
+          <div class="value" id="thisWeekViewsValue">42</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">👁️</div>
+          <div class="label">Minggu Lalu</div>
+          <div class="value" id="lastWeekViewsValue">87</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">👁️</div>
+          <div class="label">Tahun Ini</div>
+          <div class="value" id="thisYearViewsValue">1,245</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">👁️</div>
+          <div class="label">Total Views</div>
+          <div class="value" id="totalViewsValue">2,890</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">🎬</div>
+          <div class="label">Video</div>
+          <div class="value" id="totalVideosValue">12</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">❤️</div>
+          <div class="label">Like Hari Ini</div>
+          <div class="value" id="todayLikesValue">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">❤️</div>
+          <div class="label">Total Like</div>
+          <div class="value" id="totalLikesValue">0</div>
+        </div>
+      </div>
+      <h2>Video Teratas</h2>
+      <div class="filter-container">
+        <div class="filter-item">
+          <input type="checkbox" class="filter-checkbox" id="filterToday" checked>
+          <label class="filter-label" for="filterToday">Hari Ini</label>
+        </div>
+        <div class="filter-item">
+          <input type="checkbox" class="filter-checkbox" id="filter7Days" checked>
+          <label class="filter-label" for="filter7Days">7 Hari Lalu</label>
+        </div>
+        <div class="filter-item">
+          <input type="checkbox" class="filter-checkbox" id="filterLastMonth" checked>
+          <label class="filter-label" for="filterLastMonth">Bulan Lalu</label>
+        </div>
+        <div class="filter-item">
+          <input type="checkbox" class="filter-checkbox" id="filterThisYear" checked>
+          <label class="filter-label" for="filterThisYear">Tahun Ini</label>
+        </div>
+        <div class="filter-item">
+          <input type="checkbox" class="filter-checkbox" id="filterLastYear" checked>
+          <label class="filter-label" for="filterLastYear">Tahun Lalu</label>
+        </div>
+      </div>
+      <div class="video-list" id="topVideos">
+        <!-- Diisi oleh Firestore -->
+      </div>
+    </div>
+    <!-- Halaman Video -->
+    <div id="videoPage" class="page hidden">
+      <div class="search-bar">
+        <input type="text" class="search-input" placeholder="Cari video Anda">
+        <span>🔍</span>
+      </div>
+      <h2 class="section-title">Video Saya</h2>
+      <p class="section-subtitle" id="videoSubtitle">0 folder, 0 video</p>
+      <div class="action-buttons">
+        <button class="btn btn-yellow" id="addFolderBtn">📁+ Tambahkan Folder</button>
+        <button class="btn btn-green" id="refreshBtn">🔁 Menyegarkan</button>
+        <button class="btn btn-gray" id="shareBtn">🔗 Membagikan...</button>
+        <button class="btn btn-gray" id="mergeBtn">➡️ Bergabung...</button>
+        <button class="btn btn-gray" id="deleteBtn">🗑️ HAPUS</button>
+      </div>
+      <div class="folder-list" id="folderList">
+        <!-- Diisi oleh Firestore -->
+      </div>
+    </div>
+    <!-- Halaman Akun -->
+    <div id="accountPage" class="page hidden">
+      <h2>Pengaturan Akun</h2>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <div class="setting-label">Nama Akun</div>
+          <input type="text" class="setting-control" id="accountName" value="User VIYEY">
+        </div>
+        <div class="setting-item">
+          <div class="setting-label">Email</div>
+          <input type="email" class="setting-control" id="accountEmail" value="user@example.com">
+        </div>
+        <div class="setting-item">
+          <div class="setting-label">Password Baru</div>
+          <input type="password" class="setting-control" id="accountPassword" placeholder="••••••••">
+        </div>
+        <button class="btn btn-green" id="saveAccountBtn">💾 Simpan Perubahan</button>
+        <button class="btn btn-gray" id="forgotPasswordBtn">❓ Lupa Password</button>
+        <button class="btn btn-gray" id="changeEmailBtn">📧 Ganti Email</button>
+      </div>
+    </div>
+    <!-- Halaman Pengaturan -->
+    <div id="settingsPage" class="page hidden">
+      <h2>Pengaturan</h2>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <label class="setting-label">
+            <input type="checkbox" id="privacyToggle"> Aktifkan Privasi
+          </label>
+        </div>
+        <div class="setting-item">
+          <label class="setting-label">
+            <input type="checkbox" id="adblockToggle"> Paksa Adblock
+          </label>
+        </div>
+        <div class="setting-item">
+          <label class="setting-label">
+            <input type="checkbox" id="downloadButtonToggle"> Tampilkan Tombol Download di Pemutar
+          </label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-label">Tingkat Iklan</div>
+          <select class="setting-control" id="adLevel">
+            <option value="0">0% (Tanpa Iklan)</option>
+            <option value="25">25%</option>
+            <option value="50">50%</option>
+            <option value="75">75%</option>
+            <option value="100" selected>100% (Penuh)</option>
+          </select>
+        </div>
+        <button class="btn btn-green" id="saveSettingsBtn">💾 Simpan Pengaturan</button>
+      </div>
+    </div>
+    <!-- Upload Input -->
+    <input type="file" id="fileInput" accept="video/*">
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+      <div class="context-item" data-action="share">Bagikan tautan</div>
+      <div class="context-item" data-action="rename">Ganti nama</div>
+      <div class="context-item" data-action="embed">Embed Video</div>
+    </div>
+    <!-- Submenu Menu -->
+    <div class="submenu" id="submenu">
+      <div class="submenu-user" id="submenuUser">👤 User</div>
+      <div class="submenu-item" data-page="dashboard">🏠 Rumah</div>
+      <div class="submenu-item" data-page="video">🎬 Video</div>
+      <div class="submenu-item" data-page="account">👤 Akun</div>
+      <div class="submenu-item" data-page="settings">⚙️ Pengaturan</div>
+      <div class="submenu-item" id="logoutBtn">🚪 Logout</div>
+    </div>
+    <!-- Footer Navigation -->
+    <footer id="mainFooter">
+      <a href="#" class="nav-item active" id="navHome">
+        <div>🏠</div>
+        <span>Rumah</span>
+      </a>
+      <a href="#" class="nav-item" id="navVideo">
+        <div>🎬</div>
+        <span>Video</span>
+      </a>
+      <div class="add-btn-center" id="uploadBtn">➕</div>
+      <a href="#" class="nav-item" id="navSearch">
+        <div>🔍</div>
+        <span>Mencari</span>
+      </a>
+      <a href="#" class="nav-item" id="navMenu">
+        <div>☰</div>
+        <span>Menu</span>
+      </a>
+    </footer>
+    <!-- MODAL MODERN -->
+    <div class="modern-modal" id="renameModal">
+      <div class="modern-modal-content">
+        <h3>✏️ Ganti Nama</h3>
+        <input type="text" class="modern-input" id="renameInput" placeholder="Masukkan nama baru">
+        <button class="modern-btn btn-confirm" id="confirmRename">Simpan</button>
+        <button class="modern-btn btn-cancel" id="cancelRename">Batal</button>
+      </div>
+    </div>
+    <div class="modern-modal" id="folderModal">
+      <div class="modern-modal-content">
+        <h3>📁 Tambah Folder</h3>
+        <input type="text" class="modern-input" id="folderInput" placeholder="Nama folder baru">
+        <button class="modern-btn btn-confirm" id="confirmFolder">Buat</button>
+        <button class="modern-btn btn-cancel" id="cancelFolder">Batal</button>
+      </div>
+    </div>
+    <div class="modern-modal" id="shareModal">
+      <div class="modern-modal-content">
+        <h3>🔗 Bagikan Tautan</h3>
+        <input type="text" class="modern-input" id="shareInput" readonly>
+        <button class="modern-btn btn-confirm" id="copyShare">Salin Tautan</button>
+        <button class="modern-btn btn-cancel" id="closeShare">Tutup</button>
+      </div>
+    </div>
+    <div class="modern-modal" id="moveModal">
+      <div class="modern-modal-content">
+        <h3>➡️ Pindahkan ke Folder</h3>
+        <div id="folderListMove" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;"></div>
+        <button class="modern-btn btn-confirm" id="confirmMove">Pindahkan</button>
+        <button class="modern-btn btn-cancel" id="cancelMove">Batal</button>
+      </div>
+    </div>
+    <div class="modern-modal" id="deleteConfirmModal">
+      <div class="modern-modal-content">
+        <h3>⚠️ Konfirmasi Hapus</h3>
+        <p>Anda yakin ingin menghapus <span id="deleteCount">0</span> item yang dipilih?</p>
+        <p style="color:#ff5555; font-size:0.9rem;">Tindakan ini tidak dapat dibatalkan.</p>
+        <button class="modern-btn btn-confirm" id="confirmDeleteBtn">✅ Ya, Hapus</button>
+        <button class="modern-btn btn-cancel" id="cancelDeleteBtn">❌ Batal</button>
+      </div>
+    </div>
+    <!-- Embed Modal -->
+    <div class="modern-modal" id="embedModal">
+      <div class="modern-modal-content embed-modal-content">
+        <h3>🔗 Embed Video</h3>
+        <div class="embed-section">
+          <h4>Player Video</h4>
+          <div class="embed-input-group">
+            <input type="text" class="embed-input" id="embedPlayerInput" readonly>
+            <button class="btn-copy" id="copyPlayerBtn">Salin</button>
+          </div>
+        </div>
+        <div class="embed-section">
+          <h4>Link Download</h4>
+          <div class="embed-input-group">
+            <input type="text" class="embed-input" id="embedDownloadInput" readonly>
+            <button class="btn-copy" id="copyDownloadBtn">Salin</button>
+          </div>
+        </div>
+        <button class="modern-btn btn-cancel" id="closeEmbed">Tutup</button>
+      </div>
+    </div>
+    <!-- Upload Modal -->
+    <div class="modern-modal" id="uploadModal">
+      <div class="modern-modal-content">
+        <h3>➕ Upload Video</h3>
+        <button class="modern-btn btn-green" id="uploadFromDeviceBtn">📁 Dari Perangkat</button>
+        <button class="modern-btn btn-green" id="uploadFromEmbedBtn">🔗 Dari Embed</button>
+        <button class="modern-btn btn-cancel" id="closeUploadModal">Batal</button>
+      </div>
+    </div>
+    <!-- Upload Embed Modal -->
+    <div class="modern-modal" id="uploadEmbedModal">
+      <div class="modern-modal-content embed-modal-content">
+        <h3>🔗 Upload dari Embed</h3>
+        <div class="embed-section">
+          <h4>Link Player</h4>
+          <input type="text" class="modern-input" id="uploadEmbedPlayerInput" placeholder="https://...">
+        </div>
+        <div class="embed-section">
+          <h4>Link Download (Opsional)</h4>
+          <input type="text" class="modern-input" id="uploadEmbedDownloadInput" placeholder="https://...">
+        </div>
+        <button class="modern-btn btn-confirm" id="confirmUploadEmbed">Unggah</button>
+        <button class="modern-btn btn-cancel" id="cancelUploadEmbed">Batal</button>
+      </div>
+    </div>
+    <!-- NOTIFIKASI MODERN -->
+    <div class="notification-container" id="notificationContainer"></div>
+  </div> <!-- Akhir #mainContent -->
+  <script>
+    // === FIREBASE CONFIG ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzIMDg9CaToG0bbA20nfT9aa0OH_enEtg",
+      authDomain: "project-1-3ad96.firebaseapp.com",
+      projectId: "project-1-3ad96",
+      storageBucket: "project-1-3ad96.firebasestorage.app",
+      messagingSenderId: "954488595209",
+      appId: "1:954488595209:web:b20a6b151ac5777ff9e9d8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    // === DATA GLOBAL ===
+    let folders = [];
+    let videos = [];
+    let selectedItems = [];
+    let deleteItems = [];
+    let currentEmbedVideoId = null;
+    // === LOAD DATA DARI FIRESTORE ===
+    async function loadData() {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          showNotification("Pengguna belum login.", "error");
+          return;
+        }
+        // ✅ Perbaikan utama: filter folder berdasarkan ownerId
+        const foldersSnapshot = await db.collection('folders')
+          .where("ownerId", "==", user.uid)
+          .get();
+        folders = [];
+        foldersSnapshot.forEach(doc => {
+          folders.push({ id: doc.id, ...doc.data() });
+        });
+        // Load videos (publik)
+        const videosSnapshot = await db.collection('videos').get();
+        videos = [];
+        videosSnapshot.forEach(doc => {
+          videos.push({ id: doc.id, ...doc.data() });
+        });
+        // Update UI
+        document.getElementById('videoSubtitle').textContent = `${folders.length} folder, ${videos.length} video`;
+        renderVideoPage();
+        renderDashboard();
+        loadOnlineStats();
+      } catch (err) {
+        console.error("Load data error:", err);
+        showNotification("Gagal memuat data dari server.", "error");
+      }
+    }
+    // === TAMPILKAN NAMA USER ===
+    function updateUserName() {
+      const user = auth.currentUser;
+      if (user) {
+        document.getElementById('userWelcome').textContent = `Selamat datang, ${user.displayName || user.email}`;
+        document.getElementById('submenuUser').textContent = `👤 ${user.displayName || user.email}`;
+        document.getElementById('accountEmail').value = user.email;
+      }
+    }
+    // === LOGIN ===
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!email || !password) {
+        showNotification('Email dan password wajib diisi!', 'error');
+        return;
+      }
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        document.getElementById('loginModal').style.display = 'none';
+        document.getElementById('mainContent').classList.remove('hidden');
+        updateUserName();
+        loadData();
+        showNotification('Login berhasil!', 'success');
+      } catch (err) {
+        console.error("Login error:", err);
+        let errorMessage = 'Login gagal!';
+        if (err.code === 'auth/user-not-found') {
+          errorMessage = 'Akun tidak ditemukan.';
+        } else if (err.code === 'auth/wrong-password') {
+          errorMessage = 'Password salah.';
+        } else if (err.code === 'auth/invalid-email') {
+          errorMessage = 'Format email tidak valid.';
+        } else if (err.code === 'auth/too-many-requests') {
+          errorMessage = 'Terlalu banyak percobaan. Coba lagi nanti.';
+        }
+        showNotification(errorMessage, 'error');
+      }
+    });
+    // === FORGOT PASSWORD (Login Modal) ===
+    document.getElementById('forgotPasswordLoginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      if (!email) {
+        showNotification('Masukkan email Anda!', 'error');
+        return;
+      }
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showNotification('Tautan reset password telah dikirim ke email Anda.', 'success');
+      } catch (err) {
+        console.error("Reset password error:", err);
+        let errorMessage = 'Gagal mengirim tautan.';
+        if (err.code === 'auth/user-not-found') {
+          errorMessage = 'Akun dengan email ini tidak ditemukan.';
+        }
+        showNotification(errorMessage, 'error');
+      }
+    });
+    // === FORGOT PASSWORD (Akun Modal) ===
+    document.getElementById('forgotPasswordBtn').addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        showNotification('Silakan login terlebih dahulu.', 'error');
+        return;
+      }
+      const email = user.email;
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showNotification('Tautan reset password telah dikirim ke email Anda.', 'success');
+      } catch (err) {
+        console.error("Reset password error:", err);
+        showNotification('Gagal mengirim tautan: ' + err.message, 'error');
+      }
+    });
+    // === CHANGE EMAIL (Menggunakan OTP) ===
+    document.getElementById('changeEmailBtn').addEventListener('click', async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            showNotification('Silakan login terlebih dahulu.', 'error');
+            return;
+        }
+        const newEmail = prompt('Masukkan email baru:');
+        if (!newEmail) return;
+        if (!newEmail.includes('@')) {
+            showNotification('Format email tidak valid.', 'error');
+            return;
+        }
+        try {
+            await user.verifyBeforeUpdateEmail(newEmail);
+            showNotification('Verifikasi email baru telah dikirim.', 'success');
+            document.getElementById('accountEmail').value = newEmail;
+        } catch (err) {
+            console.error("Ganti email error:", err);
+            showNotification('Gagal mengganti email: ' + err.message, 'error');
+        }
+    });
+    // === UPLOAD VIDEO KE BUNNY VIA WORKER (Baru - Sesuai Worker saat ini) ===
+    document.getElementById('fileInput').addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith('video/')) {
+        const user = auth.currentUser;
+        if (!user) {
+          showNotification('Silakan login terlebih dahulu.', 'error');
+          return;
+        }
+        const title = file.name.replace(/\.[^/.]+$/, "");
+        try {
+          // 1. Kirim file ke Worker (upload ke Bunny + Firestore + ShrinkMe.io)
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const res = await fetch("https://viyey-worker-ndunkgo.aminsemprot.workers.dev/upload", {
+            method: "POST",
+            body: formData
+          });
+
+          const result = await res.json();
+          if (!res.ok) throw new Error(result.error || "Gagal upload ke Worker");
+
+          // 2. Simpan metadata ke Firestore (dengan link ShrinkMe.io dari Worker)
+          await db.collection("videos").doc(result.fileId).set({
+            title: result.originalName,
+            ownerId: user.uid,
+            bunnyVideoId: result.fileId, // Gunakan fileId dari Worker
+            downloadUrl: result.shrinkMeUrl, // Link monetisasi dari Worker
+            bunnyUrl: result.bunnyUrl, // URL asli dari Bunny
+            size: result.size,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            views: 0,
+            likes: 0,
+            playCount: 0
+          });
+
+          showNotification(`Video "${title}" berhasil diunggah!`, 'success');
+          loadData();
+        } catch (err) {
+          console.error("Upload error:", err);
+          showNotification("Gagal upload: " + err.message, 'error');
+        }
+      } else if (file) {
+        showNotification('Harap pilih file video!', 'error');
+        this.value = '';
+      }
+    });
+    // === RENDER DASHBOARD (Dengan data dari Worker) ===
+    async function renderDashboard() {
+      try {
+        const res = await fetch("https://viyey-worker-ndunkgo.aminsemprot.workers.dev/summary");
+        if (res.ok) {
+          const summary = await res.json();
+          document.getElementById('totalVideosValue').textContent = summary.totalFiles || 0;
+          document.getElementById('totalSizeValue').textContent = formatBytes(summary.totalSizeBytes || 0);
+          document.getElementById('lastUpdatedValue').textContent = summary.lastUpdated || 'N/A';
+        } else {
+          // Fallback ke data lokal jika Worker gagal
+          document.getElementById('totalVideosValue').textContent = videos.length;
+        }
+      } catch (err) {
+        console.error("Gagal ambil summary:", err);
+        document.getElementById('totalVideosValue').textContent = videos.length;
+      }
+    }
+
+    // Fungsi bantu untuk format ukuran file
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    // === RENDER HALAMAN VIDEO ===
+    function renderVideoPage() {
+      let html = '';
+      const rootVideos = videos.filter(v => !v.folder);
+      html += `<div class="folder-header">
+        <div class="folder-checkbox" id="selectAllRoot"></div>
+        <span class="folder-name">📁 Di luar folder (${rootVideos.length})</span>
+        <div class="folder-menu" id="rootMenu">⋮</div>
+      </div>`;
+      rootVideos.forEach(v => {
+        html += `<div class="folder-item" data-id="${v.id}" data-type="video">
+          <div class="folder-checkbox"></div>
+          <span class="folder-icon">🎥</span>
+          <div class="folder-name">${v.title}</div>
+          <div class="folder-menu">⋮</div>
+        </div>`;
+      });
+      folders.forEach(folder => {
+        const folderVideos = videos.filter(v => v.folder === folder.id);
+        html += `<div class="folder-header" data-folder="${folder.id}">
+          <div class="folder-checkbox" data-folder="${folder.id}"></div>
+          <span class="folder-name">📁 ${folder.name} (${folderVideos.length})</span>
+          <div class="folder-menu" data-folder="${folder.id}">⋮</div>
+        </div>`;
+        folderVideos.forEach(v => {
+          html += `<div class="folder-item" data-id="${v.id}" data-type="video" data-folder="${folder.id}">
+            <div class="folder-checkbox"></div>
+            <span class="folder-icon">🎥</span>
+            <div class="folder-name">${v.title}</div>
+            <div class="folder-menu">⋮</div>
+          </div>`;
+        });
+      });
+      document.getElementById('folderList').innerHTML = html;
+      document.getElementById('videoSubtitle').textContent = `${folders.length} folder, ${videos.length} video`;
+      // Pasang event listener
+      document.querySelectorAll('.folder-checkbox').forEach(cb => {
+        cb.addEventListener('click', function() {
+          this.classList.toggle('checked');
+          updateSelectedItems();
+        });
+      });
+      document.querySelectorAll('.folder-menu').forEach(menu => {
+        menu.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const rect = this.getBoundingClientRect();
+          const menuEl = document.getElementById('contextMenu');
+          menuEl.style.display = 'block';
+          menuEl.style.top = (rect.bottom + window.scrollY) + 'px';
+          menuEl.style.left = (rect.left + window.scrollX) + 'px';
+          const folderId = this.dataset.folder;
+          if (folderId) {
+            menuEl.dataset.targetId = folderId;
+            menuEl.dataset.targetType = 'folder';
+          } else if (this.id === 'rootMenu') {
+            menuEl.dataset.targetId = 'root';
+            menuEl.dataset.targetType = 'root';
+          } else {
+            const item = this.closest('.folder-item');
+            menuEl.dataset.targetId = item.dataset.id;
+            menuEl.dataset.targetType = item.dataset.type;
+          }
+        });
+      });
+      document.querySelectorAll('.folder-name').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.closest('.folder-item').dataset.id;
+          playVideo(id);
+        });
+      });
+      document.querySelectorAll('.folder-header').forEach(header => {
+        header.addEventListener('click', function(e) {
+          if (e.target.closest('.folder-checkbox') || e.target.closest('.folder-menu')) return;
+          const folderId = this.dataset.folder;
+          if (folderId && deleteItems.length > 0) {
+            deleteItems.filter(i => i.type === 'video').forEach(item => {
+              const video = videos.find(v => v.id === item.id);
+              if (video) video.folder = folderId;
+            });
+            videos.forEach(v => {
+              if (deleteItems.some(i => i.id === v.id)) {
+                v.folder = folderId;
+              }
+            });
+            // Simpan ke Firestore
+            deleteItems.filter(i => i.type === 'video').forEach(async item => {
+              await db.collection('videos').doc(item.id).update({ folder: folderId });
+            });
+            renderVideoPage();
+            showNotification(`${deleteItems.length} item ditempel ke folder ini!`, 'success');
+            deleteItems = [];
+          }
+        });
+      });
+    }
+    function updateSelectedItems() {
+      selectedItems = [];
+      document.querySelectorAll('.folder-checkbox.checked').forEach(cb => {
+        const item = cb.closest('.folder-item');
+        if (item) {
+          selectedItems.push({ id: item.dataset.id, type: item.dataset.type, folder: item.dataset.folder || null });
+        } else {
+          const folderId = cb.dataset.folder;
+          if (folderId) {
+            selectedItems.push({ id: folderId, type: 'folder' });
+          } else if (cb.id === 'selectAllRoot') {
+            videos.filter(v => !v.folder).forEach(v => {
+              selectedItems.push({ id: v.id, type: 'video', folder: null });
+            });
+          }
+        }
+      });
+    }
+    // === PEMUTAR VIDEO ===
+    function playVideo(videoId) {
+      const video = videos.find(v => v.id === videoId);
+      if (video && video.bunnyVideoId) {
+        window.open(`player.html?id=${videoId}`, '_blank');
+      } else {
+        showNotification('Video tidak ditemukan.', 'error');
+      }
+    }
+    // === MODAL MODERN ===
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+    // === GANTI NAMA ===
+    let currentRenameTarget = null;
+    document.querySelectorAll('.context-item[data-action="rename"]').forEach(item => {
+      item.addEventListener('click', function() {
+        currentRenameTarget = {
+          id: document.getElementById('contextMenu').dataset.targetId,
+          type: document.getElementById('contextMenu').dataset.targetType
+        };
+        document.getElementById('renameInput').value = '';
+        openModal('renameModal');
+        document.getElementById('contextMenu').style.display = 'none';
+      });
+    });
+    document.getElementById('confirmRename').addEventListener('click', async () => {
+      const newName = document.getElementById('renameInput').value.trim();
+      if (newName) {
+        if (currentRenameTarget.type === 'folder') {
+          await db.collection('folders').doc(currentRenameTarget.id).update({ name: newName });
+        } else if (currentRenameTarget.type === 'video') {
+          await db.collection('videos').doc(currentRenameTarget.id).update({ title: newName });
+        }
+        showNotification('Nama berhasil diubah!', 'success');
+        loadData();
+      }
+      closeModal('renameModal');
+    });
+    document.getElementById('cancelRename').addEventListener('click', () => {
+      closeModal('renameModal');
+    });
+    // === TAMBAH FOLDER ===
+    document.getElementById('addFolderBtn').addEventListener('click', () => {
+      openModal('folderModal');
+    });
+    document.getElementById('confirmFolder').addEventListener('click', async () => {
+      const name = document.getElementById('folderInput').value.trim();
+      if (name) {
+        const user = auth.currentUser;
+        if (!user) {
+          showNotification('Silakan login terlebih dahulu.', 'error');
+          return;
+        }
+        await db.collection('folders').add({
+          name: name,
+          ownerId: user.uid,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showNotification(`Folder "${name}" berhasil dibuat!`, 'success');
+        loadData();
+      }
+      closeModal('folderModal');
+    });
+    document.getElementById('cancelFolder').addEventListener('click', () => {
+      closeModal('folderModal');
+    });
+    // === BAGIKAN LINK (MENGGUNAKAN downloadUrl MONETISASI) ===
+    let currentShareTarget = null;
+    document.querySelectorAll('.context-item[data-action="share"]').forEach(item => {
+      item.addEventListener('click', function() {
+        currentShareTarget = {
+          id: document.getElementById('contextMenu').dataset.targetId,
+          type: document.getElementById('contextMenu').dataset.targetType
+        };
+        // ✅ GUNAKAN downloadUrl dari data lokal
+        const video = videos.find(v => v.id === currentShareTarget.id);
+        const shareLink = video?.downloadUrl || `https://viyey.pages.dev/player.html?id=${currentShareTarget.id}`;
+        document.getElementById('shareInput').value = shareLink;
+        openModal('shareModal');
+        document.getElementById('contextMenu').style.display = 'none';
+      });
+    });
+    document.getElementById('copyShare').addEventListener('click', () => {
+      const input = document.getElementById('shareInput');
+      input.select();
+      document.execCommand('copy');
+      showNotification('Tautan disalin ke clipboard!', 'success');
+    });
+    document.getElementById('closeShare').addEventListener('click', () => {
+      closeModal('shareModal');
+    });
+    // === EMBED VIDEO ===
+    let currentEmbedTarget = null;
+    document.querySelectorAll('.context-item[data-action="embed"]').forEach(item => {
+      item.addEventListener('click', function() {
+        currentEmbedTarget = {
+          id: document.getElementById('contextMenu').dataset.targetId,
+          type: document.getElementById('contextMenu').dataset.targetType
+        };
+        const video = videos.find(v => v.id === currentEmbedTarget.id);
+        if (video && video.bunnyVideoId) {
+          currentEmbedVideoId = video.id;
+          const embedPlayerUrl = `https://iframe.mediadelivery.net/embed/${video.bunnyVideoId}?autoplay=false`;
+          const embedDownloadUrl = video.downloadUrl || `https://iframe.mediadelivery.net/download/${video.bunnyVideoId}`;
+          document.getElementById('embedPlayerInput').value = `<iframe src="${embedPlayerUrl}" width="640" height="360"></iframe>`;
+          document.getElementById('embedDownloadInput').value = embedDownloadUrl;
+        }
+        openModal('embedModal');
+        document.getElementById('contextMenu').style.display = 'none';
+      });
+    });
+    document.getElementById('copyPlayerBtn').addEventListener('click', () => {
+      const input = document.getElementById('embedPlayerInput');
+      input.select();
+      document.execCommand('copy');
+      showNotification('Kode player disalin!', 'success');
+    });
+    document.getElementById('copyDownloadBtn').addEventListener('click', () => {
+      const input = document.getElementById('embedDownloadInput');
+      input.select();
+      document.execCommand('copy');
+      showNotification('Link download disalin!', 'success');
+    });
+    document.getElementById('closeEmbed').addEventListener('click', () => {
+      closeModal('embedModal');
+    });
+    // === FUNGSI BERGABUNG (PINDAH) ===
+    document.getElementById('mergeBtn').addEventListener('click', () => {
+      if (selectedItems.length === 0) return showNotification('Pilih item terlebih dahulu!', 'error');
+      const folderList = document.getElementById('folderListMove');
+      folderList.innerHTML = '<div style="color:#aaa; margin-bottom:10px;">Pilih folder tujuan:</div>';
+      folders.forEach(folder => {
+        const div = document.createElement('div');
+        div.style.padding = '8px';
+        div.style.cursor = 'pointer';
+        div.style.borderRadius = '4px';
+        div.textContent = folder.name;
+        div.onclick = async () => {
+          const videosSelected = selectedItems.filter(i => i.type === 'video');
+          for (const item of videosSelected) {
+            await db.collection('videos').doc(item.id).update({ folder: folder.id });
+          }
+          showNotification(`${videosSelected.length} item dipindahkan ke ${folder.name}!`, 'success');
+          closeModal('moveModal');
+          loadData();
+        };
+        folderList.appendChild(div);
+      });
+      const rootOption = document.createElement('div');
+      rootOption.style.padding = '8px';
+      rootOption.style.cursor = 'pointer';
+      rootOption.style.borderRadius = '4px';
+      rootOption.textContent = '📁 Di luar folder';
+      rootOption.onclick = async () => {
+        const videosSelected = selectedItems.filter(i => i.type === 'video');
+        for (const item of videosSelected) {
+          await db.collection('videos').doc(item.id).update({ folder: null });
+        }
+        showNotification(`${videosSelected.length} item dipindahkan ke luar folder!`, 'success');
+        closeModal('moveModal');
+        loadData();
+      };
+      folderList.appendChild(rootOption);
+      openModal('moveModal');
+    });
+    document.getElementById('cancelMove').addEventListener('click', () => {
+      closeModal('moveModal');
+    });
+    // === FUNGSI HAPUS (Baru - Sesuai Worker saat ini) ===
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+      if (selectedItems.length === 0) return showNotification('Pilih item dulu!', 'error');
+      deleteItems = [...selectedItems];
+      document.getElementById('deleteCount').textContent = deleteItems.length;
+      openModal('deleteConfirmModal');
+      document.querySelectorAll('.folder-checkbox.checked').forEach(cb => {
+        cb.classList.remove('checked');
+      });
+      selectedItems = [];
+    });
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+      if (deleteItems.length === 0) return;
+      if (confirm(`Anda yakin ingin menghapus ${deleteItems.length} item?`)) {
+        for (const item of deleteItems) {
+          if (item.type === 'video') {
+            // 1. Hapus dari Worker (hapus file dari Bunny & Firestore)
+            try {
+              const res = await fetch("https://viyey-worker-ndunkgo.aminsemprot.workers.dev/delete", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ fileId: item.id })
+              });
+              if (!res.ok) {
+                console.error("Gagal hapus dari Worker:", await res.text());
+              }
+            } catch (err) {
+              console.error("Error hapus dari Worker:", err);
+            }
+            // 2. Hapus dari Firestore
+            await db.collection('videos').doc(item.id).delete();
+          } else if (item.type === 'folder') {
+            await db.collection('folders').doc(item.id).delete();
+            // Hapus referensi folder di video
+            const videosInFolder = videos.filter(v => v.folder === item.id);
+            for (const v of videosInFolder) {
+              await db.collection('videos').doc(v.id).update({ folder: null });
+            }
+          }
+        }
+        showNotification(`Berhasil menghapus ${deleteItems.length} item!`, 'success');
+        loadData();
+      }
+      deleteItems = [];
+      closeModal('deleteConfirmModal');
+    });
+    document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+      deleteItems = [];
+      closeModal('deleteConfirmModal');
+    });
+    // === UPLOAD (Perangkat & Embed) - Modal Modern ===
+    document.getElementById('uploadBtn').addEventListener('click', () => {
+      openModal('uploadModal');
+    });
+    document.getElementById('uploadFromDeviceBtn').addEventListener('click', () => {
+        closeModal('uploadModal');
+        document.getElementById('fileInput').click();
+    });
+    document.getElementById('uploadFromEmbedBtn').addEventListener('click', () => {
+        closeModal('uploadModal');
+        document.getElementById('uploadEmbedPlayerInput').value = '';
+        document.getElementById('uploadEmbedDownloadInput').value = '';
+        openModal('uploadEmbedModal');
+    });
+    document.getElementById('closeUploadModal').addEventListener('click', () => {
+        closeModal('uploadModal');
+    });
+    document.getElementById('confirmUploadEmbed').addEventListener('click', async () => {
+        const embedUrl = document.getElementById('uploadEmbedPlayerInput').value.trim();
+        const downloadUrl = document.getElementById('uploadEmbedDownloadInput').value.trim();
+        if (!embedUrl) {
+            showNotification('Link player wajib diisi!', 'error');
+            return;
+        }
+        const user = auth.currentUser;
+        if (!user) {
+          showNotification('Silakan login terlebih dahulu.', 'error');
+          return;
+        }
+        const videoId = 'v' + Date.now();
+        await db.collection('videos').doc(videoId).set({
+            title: "Video Embed " + videoId,
+            ownerId: user.uid,
+            folder: null,
+            embedUrl: embedUrl,
+            downloadUrl: downloadUrl || null,
+            views: 0,
+            likes: 0,
+            playCount: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showNotification(`Video dari embed berhasil ditambahkan!`, 'success');
+        loadData();
+        closeModal('uploadEmbedModal');
+    });
+    document.getElementById('cancelUploadEmbed').addEventListener('click', () => {
+        closeModal('uploadEmbedModal');
+    });
+    // === PENGATURAN AKUN ===
+    document.getElementById('saveAccountBtn').addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (!user) {
+        showNotification('Silakan login terlebih dahulu.', 'error');
+        return;
+      }
+      const newName = document.getElementById('accountName').value.trim();
+      if (newName) {
+        user.updateProfile({ displayName: newName }).then(() => {
+          updateUserName();
+          showNotification('Nama akun berhasil diperbarui!', 'success');
+        }).catch((err) => {
+          console.error("Update display name error:", err);
+          showNotification('Gagal mengupdate nama: ' + err.message, 'error');
+        });
+      }
+    });
+    // === PENGATURAN SISTEM ===
+    document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+      const settings = {
+        privacy: document.getElementById('privacyToggle').checked,
+        adblock: document.getElementById('adblockToggle').checked,
+        downloadButton: document.getElementById('downloadButtonToggle').checked,
+        adLevel: document.getElementById('adLevel').value
+      };
+      localStorage.setItem('viyey_settings', JSON.stringify(settings));
+      showNotification('Pengaturan disimpan!', 'success');
+    });
+    // === NAVIGASI & SUBMENU ===
+    function showPage(page) {
+      document.getElementById('dashboardPage').classList.add('hidden');
+      document.getElementById('videoPage').classList.add('hidden');
+      document.getElementById('accountPage').classList.add('hidden');
+      document.getElementById('settingsPage').classList.add('hidden');
+      if (page === 'dashboard') {
+        document.getElementById('dashboardPage').classList.remove('hidden');
+        document.getElementById('hexBg').classList.remove('hidden');
+      } else if (page === 'video') {
+        document.getElementById('videoPage').classList.remove('hidden');
+        document.getElementById('hexBg').classList.add('hidden');
+        renderVideoPage();
+      } else if (page === 'account') {
+        document.getElementById('accountPage').classList.remove('hidden');
+        document.getElementById('hexBg').classList.add('hidden');
+      } else if (page === 'settings') {
+        document.getElementById('settingsPage').classList.remove('hidden');
+        document.getElementById('hexBg').classList.add('hidden');
+      }
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if (page === 'dashboard') document.getElementById('navHome').classList.add('active');
+      else if (page === 'video') document.getElementById('navVideo').classList.add('active');
+    }
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.submenu') && !e.target.closest('#navMenu')) {
+        document.getElementById('submenu').style.display = 'none';
+      }
+      if (!e.target.closest('.context-menu') && !e.target.closest('.folder-menu')) {
+        document.getElementById('contextMenu').style.display = 'none';
+      }
+      if (e.target.closest('#navHome')) {
+        e.preventDefault();
+        showPage('dashboard');
+      } else if (e.target.closest('#navVideo')) {
+        e.preventDefault();
+        showPage('video');
+      } else if (e.target.closest('#navSearch')) {
+        e.preventDefault();
+        if (document.getElementById('videoPage').classList.contains('hidden')) {
+          showPage('video');
+        }
+        setTimeout(() => document.querySelector('.search-input')?.focus(), 300);
+      } else if (e.target.closest('#logoLink')) {
+        e.preventDefault();
+        showPage('dashboard');
+      }
+      if (e.target.closest('.submenu-item')) {
+        const item = e.target.closest('.submenu-item');
+        const page = item.dataset.page;
+        if (page) {
+          showPage(page);
+          document.getElementById('submenu').style.display = 'none';
+        }
+      }
+      if (e.target.closest('#logoutBtn')) {
+        auth.signOut().then(() => {
+          document.getElementById('loginModal').style.display = 'flex';
+          document.getElementById('mainContent').classList.add('hidden');
+          document.getElementById('submenu').style.display = 'none';
+          document.getElementById('loginEmail').value = '';
+          document.getElementById('loginPassword').value = '';
+          showNotification('Anda telah logout.', 'info');
+        }).catch((err) => {
+          console.error("Logout error:", err);
+          showNotification('Gagal logout.', 'error');
+        });
+      }
+    });
+    document.getElementById('navMenu').addEventListener('click', function(e) {
+      e.preventDefault();
+      const rect = this.getBoundingClientRect();
+      const submenu = document.getElementById('submenu');
+      submenu.style.display = 'block';
+      submenu.style.top = (rect.top - 180) + 'px';
+      submenu.style.left = (rect.left - 100) + 'px';
+    });
+    // === INTEGRASI ONLINE STATS ===
+    async function loadOnlineStats() {
+      try {
+        const doc = await db.collection('stats').doc('online').get();
+        const data = doc.exists ? doc.data() : { count: 0 };
+        const count = data.count || 0;
+        document.getElementById('onlineValue').textContent = count;
+        const icon = document.getElementById('onlineIcon');
+        if (count > 0) {
+          icon.classList.add('online');
+        } else {
+          icon.classList.remove('online');
+        }
+      } catch (err) {
+        console.error('Load online stats error:', err);
+      }
+    }
+    // Panggil setiap 5 detik
+    setInterval(loadOnlineStats, 5000);
+    // === INISIALISASI ===
+    window.addEventListener('DOMContentLoaded', () => {
+      auth.onAuthStateChanged(async user => {
+        if (user) {
+          // ✅ Inisialisasi stats/online jika belum ada
+          const statsRef = db.collection('stats').doc('online');
+          const statsDoc = await statsRef.get();
+          if (!statsDoc.exists) {
+            await statsRef.set({ count: 0 });
+          }
+          document.getElementById('loginModal').style.display = 'none';
+          document.getElementById('mainContent').classList.remove('hidden');
+          updateUserName();
+          loadData();
+        } else {
+          document.getElementById('loginModal').style.display = 'flex';
+          document.getElementById('mainContent').classList.add('hidden');
+        }
+      });
+    });
+    // === NOTIFIKASI MODERN ===
+    function showNotification(message, type = 'info') {
+      const container = document.getElementById('notificationContainer');
+      const notif = document.createElement('div');
+      notif.className = 'notification-modern';
+      let icon = 'ℹ️';
+      if (type === 'success') icon = '✅';
+      else if (type === 'error') icon = '❌';
+      notif.innerHTML = `<strong>${icon} ${message}</strong>`;
+      container.appendChild(notif);
+      setTimeout(() => notif.classList.add('show'), 10);
+      setTimeout(() => {
+        notif.classList.remove('show');
+        setTimeout(() => {
+          if (notif.parentNode) notif.parentNode.removeChild(notif);
+        }, 300);
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
