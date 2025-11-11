@@ -758,7 +758,7 @@
         <div class="stat-card">
           <div class="icon">🎬</div>
           <div class="label">Video</div>
-          <div class="value" id="totalVideosValue">12</div>
+          <div class="value" id="totalVideosValue">12</div> <!-- ELEMEN DITEMUKAN -->
         </div>
         <div class="stat-card">
           <div class="icon">❤️</div>
@@ -998,10 +998,11 @@
     <!-- NOTIFIKASI MODERN -->
     <div class="notification-container" id="notificationContainer"></div>
   </div> <!-- Akhir #mainContent -->
+
   <script>
     // === FIREBASE CONFIG ===
     const firebaseConfig = {
-      apiKey: "AIzaSyBXAic_jpdVAmWuTFlJGaEuFnMg6ZyKmfE",
+      apiKey: "AIzaSyBXAic_jpdVAmWuTFlJGaEuFnMg6ZyKmfE", // ✅ API KEY BARU
       authDomain: "project-1-3ad96.firebaseapp.com",
       projectId: "project-1-3ad96",
       storageBucket: "project-1-3ad96.firebasestorage.app",
@@ -1011,12 +1012,14 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+
     // === DATA GLOBAL ===
     let folders = [];
     let videos = [];
     let selectedItems = [];
     let deleteItems = [];
     let currentEmbedVideoId = null;
+
     // === LOAD DATA DARI FIRESTORE ===
     async function loadData() {
       try {
@@ -1042,13 +1045,14 @@
         // Update UI
         document.getElementById('videoSubtitle').textContent = `${folders.length} folder, ${videos.length} video`;
         renderVideoPage();
-        renderDashboard();
+        renderDashboard(); // Panggil renderDashboard setelah data selesai dimuat
         loadOnlineStats();
       } catch (err) {
         console.error("Load data error:", err);
         showNotification("Gagal memuat data dari server.", "error");
       }
     }
+
     // === TAMPILKAN NAMA USER ===
     function updateUserName() {
       const user = auth.currentUser;
@@ -1058,6 +1062,7 @@
         document.getElementById('accountEmail').value = user.email;
       }
     }
+
     // === LOGIN ===
     document.getElementById('loginBtn').addEventListener('click', async () => {
       const email = document.getElementById('loginEmail').value.trim();
@@ -1088,6 +1093,7 @@
         showNotification(errorMessage, 'error');
       }
     });
+
     // === FORGOT PASSWORD (Login Modal) ===
     document.getElementById('forgotPasswordLoginBtn').addEventListener('click', async () => {
       const email = document.getElementById('loginEmail').value.trim();
@@ -1107,6 +1113,7 @@
         showNotification(errorMessage, 'error');
       }
     });
+
     // === FORGOT PASSWORD (Akun Modal) ===
     document.getElementById('forgotPasswordBtn').addEventListener('click', async () => {
       const user = auth.currentUser;
@@ -1123,6 +1130,7 @@
         showNotification('Gagal mengirim tautan: ' + err.message, 'error');
       }
     });
+
     // === CHANGE EMAIL (Menggunakan OTP) ===
     document.getElementById('changeEmailBtn').addEventListener('click', async () => {
         const user = auth.currentUser;
@@ -1145,6 +1153,7 @@
             showNotification('Gagal mengganti email: ' + err.message, 'error');
         }
     });
+
     // === UPLOAD VIDEO KE BUNNY VIA WORKER (Baru - Sesuai Worker saat ini) ===
     document.getElementById('fileInput').addEventListener('change', async function(e) {
       const file = e.target.files[0];
@@ -1193,22 +1202,40 @@
         this.value = '';
       }
     });
+
     // === RENDER DASHBOARD (Dengan data dari Worker) ===
     async function renderDashboard() {
+      console.log("Memasuki renderDashboard"); // Log debug
+
+      const totalVideosElement = document.getElementById('totalVideosValue');
+      const totalSizeElement = document.getElementById('totalSizeValue');
+      const lastUpdatedElement = document.getElementById('lastUpdatedValue');
+
+      console.log("totalVideosValue element:", totalVideosElement);
+      console.log("totalSizeValue element:", totalSizeElement);
+      console.log("lastUpdatedValue element:", lastUpdatedElement);
+
+      if (!totalVideosElement || !totalSizeElement || !lastUpdatedElement) {
+        console.error("Salah satu elemen tidak ditemukan di DOM.");
+        return;
+      }
+
       try {
         const res = await fetch("https://viyey-worker-ndunkgo.aminsemprot.workers.dev/summary");
         if (res.ok) {
           const summary = await res.json();
-          document.getElementById('totalVideosValue').textContent = summary.totalFiles || 0;
-          document.getElementById('totalSizeValue').textContent = formatBytes(summary.totalSizeBytes || 0);
-          document.getElementById('lastUpdatedValue').textContent = summary.lastUpdated || 'N/A';
+          console.log("Summary:", summary); // Log debug
+          totalVideosElement.textContent = summary.totalFiles || 0;
+          totalSizeElement.textContent = formatBytes(summary.totalSizeBytes || 0);
+          lastUpdatedElement.textContent = summary.lastUpdated || 'N/A';
         } else {
           // Fallback ke data lokal jika Worker gagal
-          document.getElementById('totalVideosValue').textContent = videos.length;
+          totalVideosElement.textContent = videos.length;
         }
       } catch (err) {
         console.error("Gagal ambil summary:", err);
-        document.getElementById('totalVideosValue').textContent = videos.length;
+        // Jika gagal, fallback ke data lokal
+        totalVideosElement.textContent = videos.length;
       }
     }
 
@@ -1220,6 +1247,7 @@
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
+
     // === RENDER HALAMAN VIDEO ===
     function renderVideoPage() {
       let html = '';
