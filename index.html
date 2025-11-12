@@ -760,13 +760,13 @@
           <div class="label">Video</div>
           <div class="value" id="totalVideosValue">12</div>
         </div>
-        <!-- Card Total Ukuran (DITAMBAHKAN) -->
+        <!-- ELEMEN BARU: Total Ukuran -->
         <div class="stat-card">
           <div class="icon">💾</div>
           <div class="label">Total Ukuran</div>
           <div class="value" id="totalSizeValue">0 MB</div>
         </div>
-        <!-- Card Terakhir Diperbarui (DITAMBAHKAN) -->
+        <!-- ELEMEN BARU: Terakhir Diperbarui -->
         <div class="stat-card">
           <div class="icon">🕒</div>
           <div class="label">Terakhir Diperbarui</div>
@@ -1201,57 +1201,35 @@
         this.value = '';
       }
     });
-    // === RENDER DASHBOARD (Dengan penanganan error) ===
+    // === RENDER DASHBOARD (Dengan data dari Worker) ===
     async function renderDashboard() {
       console.log("Memasuki renderDashboard"); // Log debug
       const totalVideosElement = document.getElementById('totalVideosValue');
       const totalSizeElement = document.getElementById('totalSizeValue');
       const lastUpdatedElement = document.getElementById('lastUpdatedValue');
-
-      // Jika salah satu elemen tidak ditemukan, log error dan hentikan fungsi
+      console.log("totalVideosValue element:", totalVideosElement);
+      console.log("totalSizeValue element:", totalSizeElement);
+      console.log("lastUpdatedValue element:", lastUpdatedElement);
       if (!totalVideosElement || !totalSizeElement || !lastUpdatedElement) {
         console.error("Salah satu elemen tidak ditemukan di DOM.");
-        console.log("totalVideosValue:", totalVideosElement);
-        console.log("totalSizeValue:", totalSizeElement);
-        console.log("lastUpdatedValue:", lastUpdatedElement);
-        return; // Hentikan eksekusi fungsi
+        return;
       }
-
       try {
         const res = await fetch("https://viyey-worker-ndunkgo.aminsemprot.workers.dev/summary");
         if (res.ok) {
           const summary = await res.json();
           console.log("Summary:", summary); // Log debug
-
-          // Update elemen hanya jika ditemukan
-          if (totalVideosElement) {
-            totalVideosElement.textContent = summary.totalFiles || 0;
-          }
-          if (totalSizeElement) {
-            totalSizeElement.textContent = formatBytes(summary.totalSizeBytes || 0);
-          }
-          if (lastUpdatedElement) {
-            lastUpdatedElement.textContent = summary.lastUpdated || 'N/A';
-          }
+          totalVideosElement.textContent = summary.totalFiles || 0;
+          totalSizeElement.textContent = formatBytes(summary.totalSizeBytes || 0);
+          lastUpdatedElement.textContent = summary.lastUpdated || 'N/A';
         } else {
           // Fallback ke data lokal jika Worker gagal
-          if (totalVideosElement) {
-            totalVideosElement.textContent = videos.length;
-          }
-          if (totalSizeElement) {
-            // Jika tidak bisa ambil dari Worker, gunakan ukuran estimasi dari jumlah video
-            totalSizeElement.textContent = `${(videos.length * 50).toFixed(2)} MB`; // Estimasi
-          }
-          if (lastUpdatedElement) {
-            lastUpdatedElement.textContent = new Date().toLocaleString();
-          }
+          totalVideosElement.textContent = videos.length;
         }
       } catch (err) {
         console.error("Gagal ambil summary:", err);
-        // Fallback jika fetch gagal
-        if (totalVideosElement) totalVideosElement.textContent = videos.length;
-        if (totalSizeElement) totalSizeElement.textContent = "Tidak Tersedia";
-        if (lastUpdatedElement) lastUpdatedElement.textContent = "Tidak Tersedia";
+        // Jika gagal, fallback ke data lokal
+        totalVideosElement.textContent = videos.length;
       }
     }
     // Fungsi bantu untuk format ukuran file
@@ -1601,7 +1579,7 @@
     });
     // === UPLOAD (Perangkat & Embed) - Modal Modern ===
     document.getElementById('uploadBtn').addEventListener('click', () => {
-        openModal('uploadModal');
+      openModal('uploadModal');
     });
     document.getElementById('uploadFromDeviceBtn').addEventListener('click', () => {
         closeModal('uploadModal');
