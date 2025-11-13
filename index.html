@@ -1158,49 +1158,49 @@
         }
     });
     // === UPLOAD VIDEO KE BUNNY VIA WORKER (Baru - Sesuai Worker saat ini) ===
-    document.getElementById('fileInput').addEventListener('change', async function(e) {
-      const file = e.target.files[0];
-      if (file && file.type.startsWith('video/')) {
-        const user = auth.currentUser;
-        if (!user) {
-          showNotification('Silakan login terlebih dahulu.', 'error');
-          return;
-        }
-        const title = file.name.replace(/\.[^/.]+$/, "");
-        try {
-          // 1. Kirim file ke Worker (upload ke Bunny + Firestore + ShrinkMe.io)
-          const formData = new FormData();
-          formData.append('file', file);
-          const res = await fetch("https://viyey-worker-ndunkgo.aminsemprot.workers.dev/upload", {
-            method: "POST",
-            body: formData
-          });
-          const result = await res.json();
-          if (!res.ok) throw new Error(result.error || "Gagal upload ke Worker");
-          // 2. Simpan metadata ke Firestore (dengan link ShrinkMe.io dari Worker)
-          await db.collection("videos").doc(result.fileId).set({
-            title: result.originalName,
-            ownerId: user.uid,
-            bunnyVideoId: result.fileId, // Gunakan fileId dari Worker
-            downloadUrl: result.shrinkMeUrl, // Link monetisasi dari Worker
-            bunnyUrl: result.bunnyUrl, // URL asli dari Bunny
-            size: result.size,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            views: 0,
-            likes: 0,
-            playCount: 0
-          });
-          showNotification(`Video "${title}" berhasil diunggah!`, 'success');
-          loadData();
-        } catch (err) {
-          console.error("Upload error:", err);
-          showNotification("Gagal upload: " + err.message, 'error');
-        }
-      } else if (file) {
-        showNotification('Harap pilih file video!', 'error');
-        this.value = '';
-      }
-    });
+document.getElementById('fileInput').addEventListener('change', async function(e) {
+  const file = e.target.files[0];
+  if (file && file.type.startsWith('video/')) {
+    const user = auth.currentUser;
+    if (!user) {
+      showNotification('Silakan login terlebih dahulu.', 'error');
+      return;
+    }
+    const title = file.name.replace(/\.[^/.]+$/, "");
+    try {
+      // 1. Kirim file ke Worker (upload ke Bunny + Firestore + ShrinkMe.io)
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch("https://viyey-worker-ndunkgo.aminsemprot.workers.dev/upload", {
+        method: "POST",
+        body: formData
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Gagal upload ke Worker");
+      // 2. Simpan metadata ke Firestore (dengan link ShrinkMe.io dari Worker)
+      await db.collection("videos").doc(result.fileId).set({
+        title: result.originalName,
+        ownerId: user.uid,
+        bunnyVideoId: result.fileId, // Gunakan fileId dari Worker
+        downloadUrl: result.shrinkMeUrl, // Link monetisasi dari Worker
+        bunnyUrl: result.bunnyUrl, // URL asli dari Bunny
+        size: result.size,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        views: 0,
+        likes: 0,
+        playCount: 0
+      });
+      showNotification(`Video "${title}" berhasil diunggah!`, 'success');
+      loadData();
+    } catch (err) {
+      console.error("Upload error:", err.message); // <-- Perubahan di sini: hanya log pesan
+      showNotification("Gagal upload: " + err.message, 'error');
+    }
+  } else if (file) {
+    showNotification('Harap pilih file video!', 'error');
+    this.value = '';
+  }
+});
     // === RENDER DASHBOARD (Dengan data dari Worker) ===
     async function renderDashboard() {
       console.log("Memasuki renderDashboard"); // Log debug
